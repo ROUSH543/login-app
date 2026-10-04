@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel Admin</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="dashboard">
+    <nav class="nav">
+      <div>
+        <div class="nav-title">Painel administrativo</div>
+        <div class="meta small">Acesso exclusivo para role: admin</div>
+      </div>
+      <div class="nav-actions">
+        <button id="dashboardButton" class="btn-secondary">Dashboard</button>
+        <button id="logoutButton" class="btn-danger">Sair</button>
+      </div>
+    </nav>
+
+    <section class="card wide">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+        <div>
+          <h1>Usuários cadastrados</h1>
+          <p class="subtitle">Somente dados públicos da conta são exibidos.</p>
+        </div>
+        <button id="refreshButton" class="btn-primary">Atualizar</button>
+      </div>
+
+      <div id="message" class="message" aria-live="polite"></div>
+
+      <div class="table-wrap mt">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Data de cadastro</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr>
+              <td colspan="4" class="center meta">Carregando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function showMessage(text, type = "info") {
+      const el = document.getElementById("message");
+      el.textContent = text;
+      el.className = `message show ${type}`;
+    }
+
+    function formatDate(value) {
+      return new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }).format(new Date(value));
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    async function loadAdmin() {
+      const response = await fetch("/api/users");
+
+      if (response.status === 401) {
+        window.location.href = "/";
+        return;
+      }
+
+      if (response.status === 403) {
+        window.location.href = "/dashboard.html";
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showMessage(data.error || "Não foi possível carregar os usuários.", "error");
+        return;
+      }
+
+      const tbody = document.getElementById("usersTableBody");
+
+      if (!data.users.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="center meta">Nenhum usuário cadastrado.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.users.map((user) => `
+        <tr>
+          <td>${escapeHtml(user.id)}</td>
+          <td>${escapeHtml(user.email)}</td>
+          <td><span class="role ${user.role === "admin" ? "admin" : ""}">${escapeHtml(user.role)}</span></td>
+          <td>${escapeHtml(formatDate(user.criadoEm))}</td>
+        </tr>
+      `).join("");
+    }
+
+    document.getElementById("refreshButton").addEventListener("click", () => {
+      loadAdmin().catch(() => {
+        showMessage("Erro ao atualizar a lista.", "error");
+      });
+    });
+
+    document.getElementById("dashboardButton").addEventListener("click", () => {
+      window.location.href = "/dashboard.html";
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/";
+    });
+
+    loadAdmin().catch(() => {
+      showMessage("Erro de conexão com o servidor.", "error");
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="dashboard">
+    <nav class="nav">
+      <div>
+        <div class="nav-title">Dashboard</div>
+        <div class="meta small">Área protegida</div>
+      </div>
+      <div class="nav-actions">
+        <button id="adminButton" class="btn-primary" style="display:none;">Painel admin</button>
+        <button id="logoutButton" class="btn-secondary">Sair</button>
+      </div>
+    </nav>
+
+    <div class="card wide">
+      <h1>Olá, <span id="email">...</span></h1>
+      <p class="subtitle">Você está autenticado com uma sessão válida.</p>
+
+      <div class="grid">
+        <div class="stat">
+          <div class="meta small">ID</div>
+          <strong id="id">...</strong>
+        </div>
+        <div class="stat">
+          <div class="meta small">Papel</div>
+          <strong id="role">...</strong>
+        </div>
+        <div class="stat">
+          <div class="meta small">Cadastro</div>
+          <strong id="created">...</strong>
+        </div>
+      </div>
+
+      <div id="message" class="message mt" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script>
+    function showMessage(text, type = "info") {
+      const el = document.getElementById("message");
+      el.textContent = text;
+      el.className = `message show ${type}`;
+    }
+
+    function formatDate(value) {
+      return new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }).format(new Date(value));
+    }
+
+    async function loadDashboard() {
+      const response = await fetch("/api/protected/dashboard");
+
+      if (response.status === 401) {
+        window.location.href = "/";
+        return;
+      }
+
+      const data = await response.json();
+      const user = data.user;
+
+      document.getElementById("email").textContent = user.email;
+      document.getElementById("id").textContent = user.id;
+      document.getElementById("role").textContent = user.role;
+      document.getElementById("created").textContent = formatDate(user.criadoEm);
+
+      if (user.role === "admin") {
+        document.getElementById("adminButton").style.display = "inline-block";
+      }
+    }
+
+    document.getElementById("adminButton").addEventListener("click", () => {
+      window.location.href = "/admin.html";
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/";
+    });
+
+    loadDashboard().catch(() => {
+      showMessage("Não foi possível carregar o dashboard.", "error");
+    });
+  </script>
+</body>
+</html>

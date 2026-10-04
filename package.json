@@ -1,0 +1,16 @@
+{
+  "name": "login-app-express-json",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de autenticação com Express, express-session, bcryptjs e JSON local.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1"
+  }
+}

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cadastro</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="page">
+    <section class="card">
+      <h1>Criar conta</h1>
+      <p class="subtitle">Cadastre um novo usuário.</p>
+
+      <form id="registerForm">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <input id="password" name="password" type="password" autocomplete="new-password" minlength="6" required>
+          <div class="meta small">Mínimo de 6 caracteres.</div>
+        </div>
+
+        <div id="message" class="message" aria-live="polite"></div>
+
+        <button class="btn-success" type="submit">Cadastrar</button>
+      </form>
+
+      <p class="small mt">Já tem uma conta? <a href="/">Voltar ao login</a></p>
+    </section>
+  </main>
+
+  <script>
+    function showMessage(text, type = "error") {
+      const el = document.getElementById("message");
+      el.textContent = text;
+      el.className = `message show ${type}`;
+    }
+
+    document.getElementById("registerForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showMessage(data.error || "Não foi possível concluir o cadastro.");
+          return;
+        }
+
+        showMessage("Cadastro realizado com sucesso.", "success");
+
+        setTimeout(() => {
+          window.location.href = "/dashboard.html";
+        }, 350);
+      } catch {
+        showMessage("Erro de conexão com o servidor.");
+      }
+    });
+  </script>
+</body>
+</html>
